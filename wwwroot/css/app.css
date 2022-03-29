@@ -22,9 +22,9 @@ a, .btn-link {
 {
   color: greenyellow;
   background-color: black;
-  font-size: x-large;
-  height: 500px;
-  width: 500px;
+  font-size: large;
+  height: 800px;
+  width: 800px;
 }
 
 .content {
