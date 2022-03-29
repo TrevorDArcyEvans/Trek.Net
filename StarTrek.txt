@@ -1,0 +1,95 @@
+The galaxy is divided into an 8 X 8 quadrant grid, and each quadrant
+is further divided into an 8 x 8 sector grid.
+
+You will be assigned a starting point somewhere in the galaxy to begin
+a tour of duty as commander of the starship _Enterprise_
+Your mission:
+  to seek out and destroy the fleet of Klingon warships which are
+  menacing the United Federation of Planets.
+
+You have the following commands available to you as Captain of the Starship
+Enterprise:
+
+Warp Engine Control
+  Course is in a circular numerical vector            4  3  2
+  arrangement as shown. Integer and real               . . .
+  values may be used. (Thus course 1.5 is               ...
+  half-way between 1 and 2.                         5 ---*--- 1
+                                                        ...
+  Values may approach 9.0, which itself is             . . .
+  equivalent to 1.0.                                  6  7  8
+
+  One warp factor is the size of one quadrant.        COURSE
+  Therefore, to get from quadrant 6,5 to 5,5
+  you would use course 3, warp factor 1.
+
+Short Range Sensor Scan
+  Shows you a scan of your present quadrant.
+
+  Symbology on your sensor screen is as follows:
+    <*> = Your starship's position
+    +K+ = Klingon battlecruiser
+    >!< = Federation starbase (Refuel/Repair/Re-Arm here)
+     *  = Star
+
+  A condensed 'Status Report' will also be presented.
+
+Long Range Sensor Scan
+  Shows conditions in space for one quadrant on each side of the Enterprise
+  (which is in the middle of the scan). The scan is coded in the form \###\
+  where the units digit is the number of stars, the tens digit is the number
+  of starbases, and the hundreds digit is the number of Klingons.
+
+  Example - 207 = 2 Klingons, No Starbases, & 7 stars.
+
+Phaser Control
+  Allows you to destroy the Klingon Battle Cruisers by zapping them with
+  suitably large units of energy to deplete their shield power. (Remember,
+  Klingons have phasers, too!)
+
+Photon Torpedo Control
+  Torpedo course is the same  as used in warp engine control. If you hit
+  the Klingon vessel, he is destroyed and cannot fire back at you. If you
+  miss, you are subject to the phaser fire of all other Klingons in the
+  quadrant.
+
+Shield Control
+  Defines the number of energy units to be assigned to the shields. Energy
+  is taken from total ship's energy. Note that the status display total
+  energy includes shield energy.
+
+Damage Control
+  Gives the state of repair of all devices. Where a negative
+  'State of Repair' shows that the device is temporarily damaged.
+
+Cumulative Galactic Record
+    This option shows computer memory of the results of all previous
+    short and long range sensor scans.
+
+Status Report
+    This option shows the number of Klingons, stardates, and starbases
+    remaining in the game.
+
+Photon Torpedo Calculator
+    Which gives directions and distance from Enterprise to all Klingons
+    in your quadrant.
+
+Starbase Calculator
+    This option gives direction and distance to any starbase in your
+    quadrant.
+
+Navigation Calculator
+    This option allows you to enter coordinates for direction/distance
+    calculations.
+
+Save Game
+    Save current game to a slot [0-9]
+
+Load Saved Game
+    Load a previously saved game from a slot [0-9]
+
+Help
+    This screen of instructions and explanations.
+
+Resign Commission
+    Quit current game and possibly start a new one.
