@@ -5,7 +5,7 @@ public delegate void CommandSelectedEventHandler(object sender, CommandItemInfo 
 public interface IUserInterface
 {
   /// <summary>
-  /// prompts user to enter a string with an option to Accept/Cancel
+  /// modal prompt fpr user to enter a string with an option to Accept/Cancel
   /// </summary>
   /// <param name="prompt">descriptive prompt to user</param>
   /// <returns>user's response trimmed of white space and in lower case</returns>
