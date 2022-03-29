@@ -8,6 +8,8 @@ public sealed partial class Index : IUserInterface
   private readonly Dictionary<string, CommandItemInfo> _cmds = new Dictionary<string, CommandItemInfo>();
 
   private string _display { get; set; }
+  private string _inputboxText { get; set; }
+  private string _inputboxLabel { get; set; }
   
   #region button text
   private string Btn01Title { get; set; }
@@ -41,7 +43,9 @@ public sealed partial class Index : IUserInterface
   
   public string InputString(string prompt)
   {
-    throw new NotImplementedException();
+    // TODO   modal input box
+    _inputboxLabel = prompt;
+    return _inputboxText;
   }
 
   public void AddCommands(CommandInfo commands)
@@ -92,7 +96,7 @@ public sealed partial class Index : IUserInterface
 
   public void Quit()
   {
-    throw new NotImplementedException();
+    OnInitialized();
   }
 
   public event CommandSelectedEventHandler? CommandSelected;
