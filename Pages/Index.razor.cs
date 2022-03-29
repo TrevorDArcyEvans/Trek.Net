@@ -1,16 +1,20 @@
 ﻿namespace Trek.Net.Pages;
 
+using Blazored.Modal.Services;
+using Microsoft.AspNetCore.Components;
+
 public sealed partial class Index : IUserInterface
 {
+  [CascadingParameter]
+  public IModalService Modal { get; set; } = default!;
+
   private Engine _engine;
 
   // map of 'command description' --> CommandItemInfo
   private readonly Dictionary<string, CommandItemInfo> _cmds = new Dictionary<string, CommandItemInfo>();
 
   private string _display { get; set; }
-  private string _inputboxText { get; set; }
-  private string _inputboxLabel { get; set; }
-  
+
   #region button text
   private string Btn01Title { get; set; }
   private string Btn02Title { get; set; }
@@ -40,12 +44,10 @@ public sealed partial class Index : IUserInterface
   }
 
   #region IUserInterface
-  
-  public string InputString(string prompt)
+
+  public async Task<string> InputString(string prompt)
   {
-    // TODO   modal input box
-    _inputboxLabel = prompt;
-    return _inputboxText;
+    return await ShowModal(prompt);
   }
 
   public void AddCommands(CommandInfo commands)
@@ -75,7 +77,7 @@ public sealed partial class Index : IUserInterface
 
     foreach (CommandItemInfo cii in commands.Commands)
     {
-      _cmds.Add (cii.Description, cii);
+      _cmds.Add(cii.Description, cii);
     }
   }
 
@@ -99,12 +101,18 @@ public sealed partial class Index : IUserInterface
     OnInitialized();
   }
 
-  public event CommandSelectedEventHandler? CommandSelected;
-
   #endregion
 
-  private void OnButtonClick(string cmdDescription)
+  private async Task OnButtonClick(string cmdDescription)
   {
-    CommandSelected?.Invoke(this, _cmds[cmdDescription]);
+    await _engine.OnCommandSelected(_cmds[cmdDescription]);
+  }
+
+  private async Task<string> ShowModal(string title)
+  {
+    var msgFrm = Modal.Show<MessageForm>(title);
+    var result = await msgFrm.Result;
+
+    return !result.Cancelled ? result.Data?.ToString() ?? string.Empty : string.Empty;
   }
 }

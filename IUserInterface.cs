@@ -1,7 +1,5 @@
 ﻿namespace Trek.Net;
 
-public delegate void CommandSelectedEventHandler(object sender, CommandItemInfo cmd);
-
 public interface IUserInterface
 {
   /// <summary>
@@ -10,7 +8,7 @@ public interface IUserInterface
   /// <param name="prompt">descriptive prompt to user</param>
   /// <returns>user's response trimmed of white space and in lower case</returns>
   /// <remarks>return value is string.Empty if user cancels</remarks>
-  string InputString(string prompt);
+  Task<string> InputString(string prompt);
 
   /// <summary>
   /// adds a set of commands to currently available commands
@@ -40,6 +38,4 @@ public interface IUserInterface
   /// quits the application
   /// </summary>
   void Quit();
-
-  event CommandSelectedEventHandler CommandSelected;
 }

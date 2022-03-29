@@ -1,0 +1,34 @@
+﻿@using System.ComponentModel.DataAnnotations
+
+<div class="simple-form">
+  <EditForm Model="_form" OnValidSubmit="SubmitForm">
+    <DataAnnotationsValidator/>
+
+    <div class="form-group">
+      <label for="message">Message</label>
+      <InputText @bind-Value="_form.Message" class="form-control" placeholder="Enter a value"/>
+      <ValidationMessage For="@(() => _form.Message)"/>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+    <button @onclick="Cancel" class="btn btn-secondary">Cancel</button>
+  </EditForm>
+</div>
+
+@code {
+
+  [CascadingParameter]
+  BlazoredModalInstance BlazoredModal { get; set; } = default!;
+
+  private readonly Form _form = new();
+
+  private async Task SubmitForm() => await BlazoredModal.CloseAsync(ModalResult.Ok(_form.Message));
+  private async Task Cancel() => await BlazoredModal.CancelAsync();
+
+  public class Form
+  {
+    [Required(ErrorMessage = "Please enter a message")]
+    public string? Message { get; set; }
+  }
+
+}

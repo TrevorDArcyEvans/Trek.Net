@@ -18,17 +18,15 @@ public sealed class Engine
 
     _uiMain.AddCommands(MainCommands);
 
-    _uiMain.CommandSelected += UI_Main_CommandSelected;
-
     InitializeGame();
   }
 
-  private void UI_Main_CommandSelected(object sender, CommandItemInfo cmd)
+  public async Task OnCommandSelected(CommandItemInfo cmd)
   {
     PrintGameStatus();
     if (IsGameFinished())
     {
-      if (NewGame())
+      if (await NewGame())
       {
         InitializeGame();
         Start();
@@ -99,7 +97,7 @@ public sealed class Engine
 
       case "xxx":
         ResignCommission();
-        if (NewGame())
+        if (await NewGame())
         {
           InitializeGame();
           Start();
@@ -420,13 +418,13 @@ Resign Commission
     PrintGameStatus();
   }
 
-  private bool NewGame()
+  private async Task<bool> NewGame()
   {
     _uiMain.DisplayLine("The Federation is in need of a new starship commander");
     _uiMain.DisplayLine(" for a similar mission.");
     _uiMain.DisplayLine("");
 
-    var command = _uiMain.InputString("If there is a volunteer, let him step forward and enter 'aye': ");
+    var command = await _uiMain.InputString("If there is a volunteer, let him step forward and enter 'aye': ");
     _uiMain.DisplayLine("");
 
     return command == "aye";
@@ -482,7 +480,7 @@ Resign Commission
     _uiMain.DisplayLine(HelpText);
   }
 
-  private void DamageControl()
+  private async Task DamageControl()
   {
     var totalDamage = _data.NavigationDamage +
                       _data.ShortRangeScanDamage +
@@ -495,7 +493,7 @@ Resign Commission
 
     _uiMain.DisplayLine("Technicians standing by to effect repairs to your ship");
     _uiMain.DisplayLine($"Estimated time to repair: {timeToRepair} stardates.");
-    var choice = _uiMain.InputString("Will you authorize the repair order (Y/N)? ");
+    var choice = await _uiMain.InputString("Will you authorize the repair order (Y/N)? ");
 
     if (choice == "y")
     {
@@ -567,7 +565,7 @@ Resign Commission
     LoadGame(dataFilePath);
   }
 
-  private void LoadUserGame()
+  private async Task LoadUserGame()
   {
     const string Separator = ",";
     var prompt = "Enter save slot (";
@@ -592,10 +590,11 @@ Resign Commission
 
     prompt += ") ";
 
-    var dataFilePath = string.Empty;
-    if (GetUserGameDataFilePath(prompt, ref dataFilePath))
+    var res = await GetUserGameDataFilePath(prompt);
+    if (res.IsConfirmed)
     {
       // TODO   use local storage
+      var dataFilePath = res.Value;
       if (File.Exists(dataFilePath))
       {
         LoadGame(dataFilePath);
@@ -629,31 +628,33 @@ Resign Commission
     SaveGame(dataFilePath);
   }
 
-  private void SaveUserGame()
+  private async Task SaveUserGame()
   {
-    var dataFilePath = string.Empty;
-
-    if (GetUserGameDataFilePath("Enter save slot (0-9) ", ref dataFilePath))
+    var res = await GetUserGameDataFilePath("Enter save slot (0-9) ");
+    if (res.IsConfirmed)
     {
-      SaveGame(dataFilePath);
+      SaveGame(res.Value);
     }
   }
 
-  private bool GetUserGameDataFilePath(string prompt, ref string dataFilePath)
+  private async Task<ConfirmedText> GetUserGameDataFilePath(string prompt)
   {
-    if (!InputInt(_uiMain, prompt, out var slot))
+    var dataFilePath = string.Empty;
+    var res = await InputInt(_uiMain, prompt);
+    var slot = res.Value;
+    if (!res.IsConfirmed)
     {
-      return false;
+      return new ConfirmedText { IsConfirmed = false, Value = dataFilePath };
     }
 
     if (slot < 0 || slot > 9)
     {
       _uiMain.DisplayLine("Invalid save slot ");
-      return false;
+      return new ConfirmedText { IsConfirmed = false, Value = dataFilePath };
     }
 
     dataFilePath = GetDataFilePath(slot);
-    return true;
+    return new ConfirmedText { IsConfirmed = false, Value = dataFilePath };
   }
 
   #endregion
@@ -711,7 +712,7 @@ Resign Commission
     return direction;
   }
 
-  private void NavigationCalculator()
+  private async Task NavigationCalculator()
   {
     _uiMain.Clear();
 
@@ -719,14 +720,18 @@ Resign Commission
     _uiMain.DisplayLine($"Enterprise located in quadrant [{(_data.QuadrantX + 1)},{(_data.QuadrantY + 1)}].");
     _uiMain.DisplayLine("");
 
-    if (!InputDouble(_uiMain, "Enter destination quadrant X (1--8): ", out var quadX) || quadX < 1 || quadX > 8)
+    var resX = await InputDouble(_uiMain, "Enter destination quadrant X (1--8): ");
+    var quadX = resX.Value;
+    if (!resX.IsConfirmed || quadX < 1 || quadX > 8)
     {
       _uiMain.DisplayLine("Invalid X coordinate.");
       _uiMain.DisplayLine("");
       return;
     }
 
-    if (!InputDouble(_uiMain, "Enter destination quadrant Y (1--8): ", out var quadY) || quadY < 1 || quadY > 8)
+    var resY = await InputDouble(_uiMain, "Enter destination quadrant Y (1--8): ");
+    var quadY = resY.Value;
+    if (!resY.IsConfirmed || quadY < 1 || quadY > 8)
     {
       _uiMain.DisplayLine("Invalid Y coordinate.");
       _uiMain.DisplayLine("");
@@ -841,7 +846,7 @@ Resign Commission
     _uiMain.DisplayLine("");
   }
 
-  private void PhaserControls()
+  private async Task PhaserControls()
   {
     if (_data.PhaserDamage > 0)
     {
@@ -858,7 +863,9 @@ Resign Commission
     }
 
     _uiMain.DisplayLine("Phasers locked on target.");
-    if (!InputDouble(_uiMain, $"Enter phaser energy (1--{_data.Energy}): ", out var phaserEnergy) || phaserEnergy < 1 || phaserEnergy > _data.Energy)
+    var res = await InputDouble(_uiMain, $"Enter phaser energy (1--{_data.Energy}): ");
+    var phaserEnergy = res.Value;
+    if (!res.IsConfirmed || phaserEnergy < 1 || phaserEnergy > _data.Energy)
     {
       _uiMain.DisplayLine("Invalid energy level.");
       _uiMain.DisplayLine("");
@@ -909,10 +916,11 @@ Resign Commission
     _uiMain.DisplayLine("");
   }
 
-  private void ShieldControls(bool adding, int maxTransfer)
+  private async Task ShieldControls(bool adding, int maxTransfer)
   {
-    if (!InputDouble(_uiMain, $"Enter amount of energy (1--{maxTransfer}): ", out var transfer)
-        || transfer < 1 || transfer > maxTransfer)
+    var res = await InputDouble(_uiMain, $"Enter amount of energy (1--{maxTransfer}): ");
+    var transfer = res.Value;
+    if (!res.IsConfirmed || transfer < 1 || transfer > maxTransfer)
     {
       _uiMain.DisplayLine("Invalid amount of energy.");
       _uiMain.DisplayLine("");
@@ -936,11 +944,11 @@ Resign Commission
     _uiMain.DisplayLine("");
   }
 
-  private bool KlingonsAttack()
+  private void KlingonsAttack()
   {
     if (_data.KlingonShips.Count <= 0)
     {
-      return false;
+      return;
     }
 
     foreach (var ship in _data.KlingonShips)
@@ -963,12 +971,10 @@ Resign Commission
         _uiMain.DisplayLine($"Enterprise hit by ship at sector [{(ship.SectorX + 1)},{(ship.SectorY + 1)}]. Shields dropped to {_data.ShieldLevel}.");
         if (_data.ShieldLevel == 0)
         {
-          return true;
+          return;
         }
       }
     }
-
-    return true;
   }
 
   private static double Distance(double x1, double y1, double x2, double y2)
@@ -1167,7 +1173,7 @@ Resign Commission
     _uiMain.DisplayLine("");
   }
 
-  private void TorpedoControl()
+  private async Task TorpedoControl()
   {
     if (_data.PhotonDamage > 0)
     {
@@ -1190,7 +1196,9 @@ Resign Commission
       return;
     }
 
-    if (!InputDouble(_uiMain, "Enter firing direction (1.0--9.0): ", out var direction) || direction < 1.0 || direction > 9.0)
+    var res = await InputDouble(_uiMain, "Enter firing direction (1.0--9.0): ");
+    var direction = res.Value;
+    if (!res.IsConfirmed || direction < 1.0 || direction > 9.0)
     {
       _uiMain.DisplayLine("Invalid direction.");
       _uiMain.DisplayLine("");
@@ -1268,7 +1276,7 @@ Resign Commission
 
     _uiMain.DisplayLine("Photon torpedo failed to hit anything.");
 
-    label:
+  label:
 
     if (_data.KlingonShips.Count > 0)
     {
@@ -1279,7 +1287,7 @@ Resign Commission
     _uiMain.DisplayLine("");
   }
 
-  private void Navigation()
+  private async Task Navigation()
   {
     var maxWarpFactor = 8.0;
     if (_data.NavigationDamage > 0)
@@ -1289,16 +1297,18 @@ Resign Commission
       _uiMain.DisplayLine("");
     }
 
-    if (!InputDouble(_uiMain, "Enter course (1.0--9.0): ", out var direction)
-        || direction < 1.0 || direction > 9.0)
+    var resCourse = await InputDouble(_uiMain, "Enter course (1.0--9.0): ");
+    var direction = resCourse.Value;
+    if (!resCourse.IsConfirmed || direction < 1.0 || direction > 9.0)
     {
       _uiMain.DisplayLine("Invalid course.");
       _uiMain.DisplayLine("");
       return;
     }
 
-    if (!InputDouble(_uiMain, $"Enter warp factor (0.1--{maxWarpFactor}): ", out var distance)
-        || distance < 0.1 || distance > maxWarpFactor)
+    var resWarp = await InputDouble(_uiMain, $"Enter warp factor (0.1--{maxWarpFactor}): ");
+    var distance = resWarp.Value;
+    if (!resWarp.IsConfirmed || distance < 0.1 || distance > maxWarpFactor)
     {
       _uiMain.DisplayLine("Invalid warp factor.");
       _uiMain.DisplayLine("");
@@ -1403,7 +1413,7 @@ Resign Commission
       _data.Sector[_data.SectorY][_data.SectorX] = SectorType.Enterprise;
     }
 
-    label:
+  label:
 
     if (IsDockingLocation(_data.SectorY, _data.SectorX))
     {
@@ -1448,36 +1458,34 @@ Resign Commission
     }
   }
 
-  private static bool InputDouble(IUserInterface ui, string prompt, out double value)
+  private static async Task<ConfirmedDouble> InputDouble(IUserInterface ui, string prompt)
   {
     try
     {
-      var numStr = ui.InputString(prompt);
-      value = Double.Parse(numStr);
-      return true;
+      var numStr = await ui.InputString(prompt);
+      var value = double.Parse(numStr);
+      return new ConfirmedDouble { IsConfirmed = true, Value = value };
     }
     catch
     {
-      value = 0;
     }
 
-    return false;
+    return new ConfirmedDouble { IsConfirmed = false };
   }
 
-  private static bool InputInt(IUserInterface ui, string prompt, out int value)
+  private static async Task<ConfirmedInteger> InputInt(IUserInterface ui, string prompt)
   {
     try
     {
-      var numStr = ui.InputString(prompt);
-      value = Int32.Parse(numStr);
-      return true;
+      var numStr = await ui.InputString(prompt);
+      var value = int.Parse(numStr);
+      return new ConfirmedInteger { IsConfirmed = true, Value = value };
     }
     catch
     {
-      value = 0;
     }
 
-    return false;
+    return new ConfirmedInteger { IsConfirmed = false };
   }
 
   private void GenerateSector()
@@ -1725,4 +1733,26 @@ Resign Commission
 
     _uiMain.DisplayLine("");
   }
+
+  #region ConfirmedValues
+
+  private abstract class ConfirmedValue<T>
+  {
+    public bool IsConfirmed { get; init; }
+    public T Value { get; init; }
+  }
+
+  private sealed class ConfirmedText : ConfirmedValue<string>
+  {
+  }
+
+  private sealed class ConfirmedDouble : ConfirmedValue<double>
+  {
+  }
+
+  private sealed class ConfirmedInteger : ConfirmedValue<int>
+  {
+  }
+
+  #endregion
 }
