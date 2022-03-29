@@ -1,20 +1,23 @@
 ﻿namespace Trek.Net;
 
+using Blazored.LocalStorage;
 using System.Diagnostics;
 using System.Text;
-using System.Xml.Serialization;
+using Newtonsoft.Json;
 
 public sealed class Engine
 {
   private const string DataFileRootName = "StarTrekData";
-  private const string DataFileExtension = ".xml";
+  private const string DataFileExtension = ".json";
 
   private StarTrekData _data;
   private readonly IUserInterface _uiMain;
+  private readonly ILocalStorageService _storage;
 
-  public Engine(IUserInterface thisUiMain)
+  public Engine(IUserInterface thisUiMain, ILocalStorageService storage)
   {
     _uiMain = thisUiMain;
+    _storage = storage;
 
     _uiMain.AddCommands(MainCommands);
 
@@ -507,11 +510,9 @@ Resign Commission
 
   private static string GetDataFilePath(string slotName = "")
   {
-    // TODO   use local storage
     var dataFileName = DataFileRootName + slotName + DataFileExtension;
-    var dataFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), dataFileName);
 
-    return dataFilePath;
+    return dataFileName;
   }
 
   private static string GetDataFilePath(int slot)
@@ -525,23 +526,17 @@ Resign Commission
   /// load game from specified file
   /// </summary>
   /// <param name="dataFilePath">full path to file to load game from</param>
-  private void LoadGame(string dataFilePath)
+  private async Task LoadGame(string dataFilePath)
   {
-    // TODO   use local storage
-    if (!File.Exists(dataFilePath))
+    var res = await _storage.GetItemAsync<string>(dataFilePath);
+    if (string.IsNullOrEmpty(res))
     {
       // never saved a game, so save this one
-      SaveGame();
+      await SaveGame();
     }
 
-    Debug.Assert(File.Exists(dataFilePath));
-
-    // TODO   use local storage
-    var dataSerializer = new XmlSerializer(typeof(StarTrekData));
-    using (var fs = new FileStream(dataFilePath, FileMode.Open))
-    {
-      _data = (StarTrekData)dataSerializer.Deserialize(fs);
-    }
+    var json = await _storage.GetItemAsync<string>(dataFilePath);
+    _data = JsonConvert.DeserializeObject<StarTrekData>(json);
 
     PrintMission();
   }
@@ -549,11 +544,11 @@ Resign Commission
   /// <summary>
   /// used by system for default load game
   /// </summary>
-  private void LoadGame()
+  private async Task LoadGame()
   {
     var dataFilePath = GetDataFilePath();
 
-    LoadGame(dataFilePath);
+    await LoadGame(dataFilePath);
   }
 
   private async Task LoadUserGame()
@@ -565,8 +560,8 @@ Resign Commission
     for (var i = 0; i <= 9; i++)
     {
       var thisDataFilePath = GetDataFilePath(i);
-      // TODO   use local storage
-      if (File.Exists(thisDataFilePath))
+      var resSlot = await _storage.GetItemAsync<string>(thisDataFilePath);
+      if (!string.IsNullOrEmpty(resSlot))
       {
         prompt += i.ToString();
         prompt += Separator;
@@ -584,11 +579,11 @@ Resign Commission
     var res = await GetUserGameDataFilePath(prompt);
     if (res.IsConfirmed)
     {
-      // TODO   use local storage
       var dataFilePath = res.Value;
-      if (File.Exists(dataFilePath))
+      var resSlot = await _storage.GetItemAsync<string>(dataFilePath);
+      if (!string.IsNullOrEmpty(resSlot))
       {
-        LoadGame(dataFilePath);
+        await LoadGame(dataFilePath);
       }
       else
       {
@@ -601,22 +596,20 @@ Resign Commission
   /// save current game to specified file
   /// </summary>
   /// <param name="dataFilePath">full path to file to save game into</param>
-  private void SaveGame(string dataFilePath)
+  private async Task SaveGame(string dataFilePath)
   {
-    // TODO   use local storage
-    var dataSerializer = new XmlSerializer(typeof(StarTrekData));
-    using var sw = new StreamWriter(dataFilePath);
-    dataSerializer.Serialize(sw, _data);
+    var json = JsonConvert.SerializeObject(_data);
+    await _storage.SetItemAsync(dataFilePath, json);
   }
 
   /// <summary>
   /// used by system for default save game
   /// </summary>
-  private void SaveGame()
+  private async Task SaveGame()
   {
     var dataFilePath = GetDataFilePath();
 
-    SaveGame(dataFilePath);
+    await SaveGame(dataFilePath);
   }
 
   private async Task SaveUserGame()
@@ -624,7 +617,7 @@ Resign Commission
     var res = await GetUserGameDataFilePath("Enter save slot (0-9) ");
     if (res.IsConfirmed)
     {
-      SaveGame(res.Value);
+      await SaveGame(res.Value);
     }
   }
 
@@ -645,7 +638,7 @@ Resign Commission
     }
 
     dataFilePath = GetDataFilePath(slot);
-    return new ConfirmedText { IsConfirmed = false, Value = dataFilePath };
+    return new ConfirmedText { IsConfirmed = true, Value = dataFilePath };
   }
 
   #endregion

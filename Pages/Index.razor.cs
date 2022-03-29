@@ -1,5 +1,6 @@
 ﻿namespace Trek.Net.Pages;
 
+using Blazored.LocalStorage;
 using Blazored.Modal.Services;
 using Microsoft.AspNetCore.Components;
 
@@ -7,6 +8,9 @@ public sealed partial class Index : IUserInterface
 {
   [CascadingParameter]
   public IModalService Modal { get; set; } = default!;
+
+  [Inject]
+  private ILocalStorageService BrowserStorage { get; set; }
 
   private Engine _engine;
 
@@ -16,6 +20,7 @@ public sealed partial class Index : IUserInterface
   private string _display { get; set; }
 
   #region button text
+
   private string Btn01Title { get; set; }
   private string Btn02Title { get; set; }
   private string Btn03Title { get; set; }
@@ -33,11 +38,12 @@ public sealed partial class Index : IUserInterface
   private string Btn15Title { get; set; }
   private string Btn16Title { get; set; }
   private string Btn17Title { get; set; }
+
   #endregion
 
   protected override void OnInitialized()
   {
-    _engine = new Engine(this);
+    _engine = new Engine(this, BrowserStorage);
     _engine.Start();
 
     base.OnInitialized();
