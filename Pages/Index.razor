@@ -2,21 +2,82 @@
 
 <PageTitle>Trek.Net</PageTitle>
 
-<pre class="display">@_display</pre>
-<button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn01Title))">@Btn01Title</button>
-<button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn02Title))">@Btn02Title</button>
-<button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn03Title))">@Btn03Title</button>
-<button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn04Title))">@Btn04Title</button>
-<button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn05Title))">@Btn05Title</button>
-<button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn06Title))">@Btn06Title</button>
-<button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn07Title))">@Btn07Title</button>
-<button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn08Title))">@Btn08Title</button>
-<button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn09Title))">@Btn09Title</button>
-<button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn10Title))">@Btn10Title</button>
-<button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn11Title))">@Btn11Title</button>
-<button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn12Title))">@Btn12Title</button>
-<button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn13Title))">@Btn13Title</button>
-<button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn14Title))">@Btn14Title</button>
-<button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn15Title))">@Btn15Title</button>
-<button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn16Title))">@Btn16Title</button>
-<button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn17Title))">@Btn17Title</button>
+<div class="top-row px-2 py-2">
+  <table>
+    <tr>
+      <td rowspan="10">
+        <pre class="display">@_display</pre>
+      </td>
+      <td>
+        <button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn01Title))">@Btn01Title</button>
+      </td>
+      <td>
+        <button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn02Title))">@Btn02Title</button>
+      </td>
+      <td>
+        <button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn03Title))">@Btn03Title</button>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn04Title))">@Btn04Title</button>
+      </td>
+      <td>
+        <button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn05Title))">@Btn05Title</button>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn06Title))">@Btn06Title</button>
+      </td>
+      <td>
+        <button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn07Title))">@Btn07Title</button>
+      </td>
+      <td>
+        <button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn08Title))">@Btn08Title</button>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn09Title))">@Btn09Title</button>
+      </td>
+      <td>
+        <button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn10Title))">@Btn10Title</button>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn11Title))">@Btn11Title</button>
+      </td>
+      <td>
+        <button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn12Title))">@Btn12Title</button>
+      </td>
+      <td>
+        <button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn13Title))">@Btn13Title</button>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn14Title))">@Btn14Title</button>
+      </td>
+      <td>
+        <button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn15Title))">@Btn15Title</button>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn16Title))">@Btn16Title</button>
+      </td>
+      <td>
+        <button class="btn btn-primary" onclick="@(async () => await OnButtonClick(Btn17Title))">@Btn17Title</button>
+      </td>
+    </tr>
+  </table>
+
+</div>
