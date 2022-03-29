@@ -60,7 +60,7 @@ public sealed class Engine
       #region Main commands
 
       case "nav":
-        Navigation();
+        await Navigation();
         break;
 
       case "srs":
@@ -72,23 +72,23 @@ public sealed class Engine
         break;
 
       case "pha":
-        PhaserControls();
+        await PhaserControls();
         break;
 
       case "tor":
-        TorpedoControl();
+        await TorpedoControl();
         break;
 
       case "dam":
-        DamageControl();
+        await DamageControl();
         break;
 
       case "sav":
-        SaveUserGame();
+        await SaveUserGame();
         break;
 
       case "ldg":
-        LoadUserGame();
+        await LoadUserGame();
         break;
 
       case "hlp":
@@ -114,11 +114,11 @@ public sealed class Engine
       #region Shield commands
 
       case "add":
-        ShieldControls(true, _data.Energy);
+        await ShieldControls(true, _data.Energy);
         break;
 
       case "sub":
-        ShieldControls(false, _data.ShieldLevel);
+        await ShieldControls(false, _data.ShieldLevel);
         break;
 
       #endregion
@@ -142,7 +142,7 @@ public sealed class Engine
         break;
 
       case "nvc":
-        NavigationCalculator();
+        await NavigationCalculator();
         break;
 
       #endregion
@@ -505,22 +505,13 @@ Resign Commission
 
   #region Load/Save Games
 
-  private static string GetDataFilePath(string slotName)
+  private static string GetDataFilePath(string slotName = "")
   {
     // TODO   use local storage
     var dataFileName = DataFileRootName + slotName + DataFileExtension;
     var dataFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), dataFileName);
 
     return dataFilePath;
-  }
-
-  /// <summary>
-  /// used for system default save/load file
-  /// </summary>
-  /// <returns></returns>
-  private static string GetDataFilePath()
-  {
-    return GetDataFilePath("");
   }
 
   private static string GetDataFilePath(int slot)
@@ -1276,7 +1267,7 @@ Resign Commission
 
     _uiMain.DisplayLine("Photon torpedo failed to hit anything.");
 
-  label:
+    label:
 
     if (_data.KlingonShips.Count > 0)
     {
@@ -1413,7 +1404,7 @@ Resign Commission
       _data.Sector[_data.SectorY][_data.SectorX] = SectorType.Enterprise;
     }
 
-  label:
+    label:
 
     if (IsDockingLocation(_data.SectorY, _data.SectorX))
     {
@@ -1468,6 +1459,7 @@ Resign Commission
     }
     catch
     {
+      // ignored
     }
 
     return new ConfirmedDouble { IsConfirmed = false };
@@ -1483,6 +1475,7 @@ Resign Commission
     }
     catch
     {
+      // ignored
     }
 
     return new ConfirmedInteger { IsConfirmed = false };
