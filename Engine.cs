@@ -1,7 +1,6 @@
 ﻿namespace Trek.Net;
 
 using System.Diagnostics;
-using System.Reflection;
 using System.Text;
 using System.Xml.Serialization;
 
@@ -510,6 +509,7 @@ Resign Commission
 
   private static string GetDataFilePath(string slotName)
   {
+    // TODO   use local storage
     var dataFileName = DataFileRootName + slotName + DataFileExtension;
     var dataFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), dataFileName);
 
@@ -560,7 +560,7 @@ Resign Commission
   /// <summary>
   /// used by system for default load game
   /// </summary>
-  public void LoadGame()
+  private void LoadGame()
   {
     var dataFilePath = GetDataFilePath();
 
@@ -670,7 +670,7 @@ Resign Commission
 
   private static double ComputeDirection(int x1, int y1, int x2, int y2)
   {
-    double direction = 0;
+    double direction;
     if (x1 == x2)
     {
       direction = y1 < y2 ? 7 : 3;
@@ -1716,7 +1716,7 @@ Resign Commission
     }
   }
 
-  private void PrintStrings(string[] strings)
+  private void PrintStrings(IEnumerable<string> strings)
   {
     foreach (var str in strings)
     {
