@@ -129,7 +129,7 @@ public sealed class Engine
       #region Computer commands
 
       case "rec":
-        DisplayGalaticRecord();
+        DisplayGalacticRecord();
         break;
 
       case "sta":
@@ -160,7 +160,7 @@ public sealed class Engine
 
   #region Title
 
-  public static readonly string[] TitleStrings =
+  private static readonly string[] TitleStrings =
   {
     @"                         ______ __   __ ______ ______ ______ ",
     @"                        / __  // /  / // __  // ____// __  /",
@@ -187,7 +187,7 @@ public sealed class Engine
 
   #region QuadrantNames
 
-  public static readonly string[] QuadrantNames =
+  private static readonly string[] QuadrantNames =
   {
     "Aaamazzara",
     "Altair IV",
@@ -275,10 +275,10 @@ public sealed class Engine
 
   #region Commands
 
-  private static readonly string MainCommandPrompt = "Enter command: ";
-  private static readonly string MainCommandTitle = "--- Commands -----------------";
+  private const string MainCommandPrompt = "Enter command: ";
+  private const string MainCommandTitle = "--- Commands -----------------";
 
-  private static readonly List<CommandItemInfo> MainCommandItems = new List<CommandItemInfo>
+  private static readonly List<CommandItemInfo> MainCommandItems = new()
   {
     new CommandItemInfo("nav", "Warp Engine Control"),
     new CommandItemInfo("srs", "Short Range Scan"),
@@ -303,7 +303,7 @@ public sealed class Engine
     new CommandItemInfo("xxx", "Resign Commission"),
   };
 
-  private static readonly CommandInfo MainCommands = new CommandInfo(MainCommandPrompt, MainCommandTitle, MainCommandItems);
+  private static readonly CommandInfo MainCommands = new(MainCommandPrompt, MainCommandTitle, MainCommandItems);
 
   #endregion
 
@@ -324,7 +324,7 @@ public sealed class Engine
     _uiMain.DisplayLine(" for a similar mission.");
     _uiMain.DisplayLine("");
 
-    string command = _uiMain.InputString("If there is a volunteer, let him step forward and enter 'aye': ");
+    var command = _uiMain.InputString("If there is a volunteer, let him step forward and enter 'aye': ");
     _uiMain.DisplayLine("");
 
     return command == "aye";
@@ -376,9 +376,9 @@ public sealed class Engine
 
   private void ShowHelp()
   {
-    // load from resource
-    Assembly assy = Assembly.GetExecutingAssembly();
-    StreamReader sr = new StreamReader(assy.GetManifestResourceStream("SuperStarTrek.StarTrek.txt"));
+    // TODO   load from somewhere which is not resource!
+    var assy = Assembly.GetExecutingAssembly();
+    var sr = new StreamReader(assy.GetManifestResourceStream("SuperStarTrek.StarTrek.txt"));
 
     _uiMain.Clear();
     _uiMain.DisplayLine(sr.ReadToEnd());
@@ -386,71 +386,73 @@ public sealed class Engine
 
   private void DamageControl()
   {
-    var TotalDamage = _data.NavigationDamage +
+    var totalDamage = _data.NavigationDamage +
                       _data.ShortRangeScanDamage +
                       _data.LongRangeScanDamage +
                       _data.ShieldControlDamage +
                       _data.ComputerDamage +
                       _data.PhotonDamage +
                       _data.PhaserDamage;
-    var TimeToRepair = 1 + (int)TotalDamage / 7; // repairs always take a minimum of 1 day
+    var timeToRepair = 1 + totalDamage / 7; // repairs always take a minimum of 1 day
 
     _uiMain.DisplayLine("Technicians standing by to effect repairs to your ship");
-    _uiMain.DisplayLine(string.Format("Estimated time to repair: {0} stardates.", TimeToRepair));
-    var Choice = _uiMain.InputString("Will you authorize the repair order (Y/N)? ");
+    _uiMain.DisplayLine($"Estimated time to repair: {timeToRepair} stardates.");
+    var choice = _uiMain.InputString("Will you authorize the repair order (Y/N)? ");
 
-    if (Choice == "y")
+    if (choice == "y")
     {
       _data.ResetDamage();
-      _data.TimeRemaining -= TimeToRepair;
-      _data.StarDate += TimeToRepair;
+      _data.TimeRemaining -= timeToRepair;
+      _data.StarDate += timeToRepair;
     }
   }
 
   #region Load/Save Games
 
-  private string GetDataFilePath(string SlotName)
+  private static string GetDataFilePath(string slotName)
   {
-    var DataFileName = DataFileRootName + SlotName + DataFileExtension;
-    var DataFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), DataFileName);
+    var dataFileName = DataFileRootName + slotName + DataFileExtension;
+    var dataFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), dataFileName);
 
-    return DataFilePath;
+    return dataFilePath;
   }
 
   /// <summary>
   /// used for system default save/load file
   /// </summary>
   /// <returns></returns>
-  private string GetDataFilePath()
+  private static string GetDataFilePath()
   {
     return GetDataFilePath("");
   }
 
-  private string GetDataFilePath(int Slot)
+  private static string GetDataFilePath(int slot)
   {
-    Debug.Assert(Slot >= 0 && Slot <= 9, "Only slots 0-9 are supported");
+    Debug.Assert(slot is >= 0 and <= 9, "Only slots 0-9 are supported");
 
-    return GetDataFilePath(Slot.ToString());
+    return GetDataFilePath(slot.ToString());
   }
 
   /// <summary>
   /// load game from specified file
   /// </summary>
-  /// <param name="DataFilePath">full path to file to load game from</param>
-  private void LoadGame(string DataFilePath)
+  /// <param name="dataFilePath">full path to file to load game from</param>
+  private void LoadGame(string dataFilePath)
   {
-    if (!File.Exists(DataFilePath))
+    // TODO   use local storage
+    if (!File.Exists(dataFilePath))
     {
       // never saved a game, so save this one
       SaveGame();
     }
 
-    Debug.Assert(File.Exists(DataFilePath));
+    Debug.Assert(File.Exists(dataFilePath));
 
-    XmlSerializer DataSerializer = new XmlSerializer(typeof(StarTrekData));
-    using (FileStream fs = new FileStream(DataFilePath, FileMode.Open))
+    // TODO   use local storage
+    var dataSerializer = new XmlSerializer(typeof(StarTrekData));
+    using (var fs = new FileStream(dataFilePath, FileMode.Open))
     {
-      _data = (StarTrekData)DataSerializer.Deserialize(fs);
+      _data = (StarTrekData)dataSerializer.Deserialize(fs);
     }
 
     PrintMission();
@@ -461,9 +463,9 @@ public sealed class Engine
   /// </summary>
   public void LoadGame()
   {
-    var DataFilePath = GetDataFilePath();
+    var dataFilePath = GetDataFilePath();
 
-    LoadGame(DataFilePath);
+    LoadGame(dataFilePath);
   }
 
   private void LoadUserGame()
@@ -474,8 +476,9 @@ public sealed class Engine
     // work out which slots have a corresponding file
     for (var i = 0; i <= 9; i++)
     {
-      var ThisDataFilePath = GetDataFilePath(i);
-      if (File.Exists(ThisDataFilePath))
+      var thisDataFilePath = GetDataFilePath(i);
+      // TODO   use local storage
+      if (File.Exists(thisDataFilePath))
       {
         prompt += i.ToString();
         prompt += Separator;
@@ -490,12 +493,13 @@ public sealed class Engine
 
     prompt += ") ";
 
-    var DataFilePath = string.Empty;
-    if (GetUserGameDataFilePath(prompt, ref DataFilePath))
+    var dataFilePath = string.Empty;
+    if (GetUserGameDataFilePath(prompt, ref dataFilePath))
     {
-      if (File.Exists(DataFilePath))
+      // TODO   use local storage
+      if (File.Exists(dataFilePath))
       {
-        LoadGame(DataFilePath);
+        LoadGame(dataFilePath);
       }
       else
       {
@@ -507,52 +511,50 @@ public sealed class Engine
   /// <summary>
   /// save current game to specified file
   /// </summary>
-  /// <param name="DataFilePath">full path to file to save game into</param>
-  private void SaveGame(string DataFilePath)
+  /// <param name="dataFilePath">full path to file to save game into</param>
+  private void SaveGame(string dataFilePath)
   {
-    XmlSerializer DataSerializer = new XmlSerializer(typeof(StarTrekData));
-    using (var sw = new StreamWriter(DataFilePath))
-    {
-      DataSerializer.Serialize(sw, _data);
-    }
+    // TODO   use local storage
+    var dataSerializer = new XmlSerializer(typeof(StarTrekData));
+    using var sw = new StreamWriter(dataFilePath);
+    dataSerializer.Serialize(sw, _data);
   }
 
   /// <summary>
   /// used by system for default save game
   /// </summary>
-  public void SaveGame()
+  private void SaveGame()
   {
-    var DataFilePath = GetDataFilePath();
+    var dataFilePath = GetDataFilePath();
 
-    SaveGame(DataFilePath);
+    SaveGame(dataFilePath);
   }
 
   private void SaveUserGame()
   {
-    var DataFilePath = string.Empty;
+    var dataFilePath = string.Empty;
 
-    if (GetUserGameDataFilePath("Enter save slot (0-9) ", ref DataFilePath))
+    if (GetUserGameDataFilePath("Enter save slot (0-9) ", ref dataFilePath))
     {
-      SaveGame(DataFilePath);
+      SaveGame(dataFilePath);
     }
   }
 
-  private bool GetUserGameDataFilePath(string prompt, ref string DataFilePath)
+  private bool GetUserGameDataFilePath(string prompt, ref string dataFilePath)
   {
-    var Slot = 0;
-    if (InputInt(_uiMain, prompt, out Slot))
+    if (!InputInt(_uiMain, prompt, out var slot))
     {
-      if (Slot < 0 || Slot > 9)
-      {
-        _uiMain.DisplayLine("Invalid save slot ");
-        return false;
-      }
-
-      DataFilePath = GetDataFilePath(Slot);
-      return true;
+      return false;
     }
 
-    return false;
+    if (slot < 0 || slot > 9)
+    {
+      _uiMain.DisplayLine("Invalid save slot ");
+      return false;
+    }
+
+    dataFilePath = GetDataFilePath(slot);
+    return true;
   }
 
   #endregion
@@ -561,7 +563,7 @@ public sealed class Engine
   {
     _data.Resigned = true;
 
-    _uiMain.DisplayLine(string.Format("There were {0} Klingon Battlecruisers left at the", _data.Klingons));
+    _uiMain.DisplayLine($"There were {_data.Klingons} Klingon Battlecruisers left at the");
     _uiMain.DisplayLine(" end of your mission.");
     _uiMain.DisplayLine("");
     _uiMain.DisplayLine("");
@@ -572,31 +574,17 @@ public sealed class Engine
     double direction = 0;
     if (x1 == x2)
     {
-      if (y1 < y2)
-      {
-        direction = 7;
-      }
-      else
-      {
-        direction = 3;
-      }
+      direction = y1 < y2 ? 7 : 3;
     }
     else if (y1 == y2)
     {
-      if (x1 < x2)
-      {
-        direction = 1;
-      }
-      else
-      {
-        direction = 5;
-      }
+      direction = x1 < x2 ? 1 : 5;
     }
     else
     {
       double dy = Math.Abs(y2 - y1);
       double dx = Math.Abs(x2 - x1);
-      double angle = Math.Atan2(dy, dx);
+      var angle = Math.Atan2(dy, dx);
       if (x1 < x2)
       {
         if (y1 < y2)
@@ -629,20 +617,17 @@ public sealed class Engine
     _uiMain.Clear();
 
     _uiMain.DisplayLine("");
-    _uiMain.DisplayLine(string.Format("Enterprise located in quadrant [{0},{1}].", (_data.QuadrantX + 1), (_data.QuadrantY + 1)));
+    _uiMain.DisplayLine($"Enterprise located in quadrant [{(_data.QuadrantX + 1)},{(_data.QuadrantY + 1)}].");
     _uiMain.DisplayLine("");
 
-    double quadX;
-    double quadY;
-
-    if (!InputDouble(_uiMain, "Enter destination quadrant X (1--8): ", out quadX) || quadX < 1 || quadX > 8)
+    if (!InputDouble(_uiMain, "Enter destination quadrant X (1--8): ", out var quadX) || quadX < 1 || quadX > 8)
     {
       _uiMain.DisplayLine("Invalid X coordinate.");
       _uiMain.DisplayLine("");
       return;
     }
 
-    if (!InputDouble(_uiMain, "Enter destination quadrant Y (1--8): ", out quadY) || quadY < 1 || quadY > 8)
+    if (!InputDouble(_uiMain, "Enter destination quadrant Y (1--8): ", out var quadY) || quadY < 1 || quadY > 8)
     {
       _uiMain.DisplayLine("Invalid Y coordinate.");
       _uiMain.DisplayLine("");
@@ -650,8 +635,8 @@ public sealed class Engine
     }
 
     _uiMain.DisplayLine("");
-    int qx = ((int)(quadX)) - 1;
-    int qy = ((int)(quadY)) - 1;
+    var qx = ((int)(quadX)) - 1;
+    var qy = ((int)(quadY)) - 1;
     if (qx == _data.QuadrantX && qy == _data.QuadrantY)
     {
       _uiMain.DisplayLine("That is the current location of the Enterprise.");
@@ -659,8 +644,8 @@ public sealed class Engine
       return;
     }
 
-    _uiMain.DisplayLine(string.Format("Direction: {0:#.##}", ComputeDirection(_data.QuadrantX, _data.QuadrantY, qx, qy)));
-    _uiMain.DisplayLine(string.Format("Distance:  {0:##.##}", Distance(_data.QuadrantX, _data.QuadrantY, qx, qy)));
+    _uiMain.DisplayLine($"Direction: {ComputeDirection(_data.QuadrantX, _data.QuadrantY, qx, qy):#.##}");
+    _uiMain.DisplayLine($"Distance:  {Distance(_data.QuadrantX, _data.QuadrantY, qx, qy):##.##}");
     _uiMain.DisplayLine("");
   }
 
@@ -671,9 +656,9 @@ public sealed class Engine
     _uiMain.DisplayLine("");
     if (_data.Quadrants[_data.QuadrantY][_data.QuadrantX].StarBase)
     {
-      _uiMain.DisplayLine(string.Format("Starbase in sector [{0},{1}].", (_data.StarBaseX + 1), (_data.StarBaseY + 1)));
-      _uiMain.DisplayLine(string.Format("Direction: {0:#.##}", ComputeDirection(_data.SectorX, _data.SectorY, _data.StarBaseX, _data.StarBaseY)));
-      _uiMain.DisplayLine(string.Format("Distance:  {0:##.##}", Distance(_data.SectorX, _data.SectorY, _data.StarBaseX, _data.StarBaseY) / 8));
+      _uiMain.DisplayLine($"Starbase in sector [{(_data.StarBaseX + 1)},{(_data.StarBaseY + 1)}].");
+      _uiMain.DisplayLine($"Direction: {ComputeDirection(_data.SectorX, _data.SectorY, _data.StarBaseX, _data.StarBaseY):#.##}");
+      _uiMain.DisplayLine($"Distance:  {Distance(_data.SectorX, _data.SectorY, _data.StarBaseX, _data.StarBaseY) / 8:##.##}");
     }
     else
     {
@@ -695,7 +680,7 @@ public sealed class Engine
       return;
     }
 
-    foreach (KlingonShip ship in _data.KlingonShips)
+    foreach (var ship in _data.KlingonShips)
     {
       _uiMain.DisplayLine(string.Format("Direction {2:#.##}: Klingon ship in sector [{0},{1}].",
         (ship.SectorX + 1), (ship.SectorY + 1),
@@ -710,35 +695,35 @@ public sealed class Engine
     _uiMain.Clear();
 
     _uiMain.DisplayLine("");
-    _uiMain.DisplayLine(string.Format("               Time Remaining: {0}", _data.TimeRemaining));
-    _uiMain.DisplayLine(string.Format("      Klingon Ships Remaining: {0}", _data.Klingons));
-    _uiMain.DisplayLine(string.Format("                    Starbases: {0}", _data.StarBases));
-    _uiMain.DisplayLine(string.Format("           Warp Engine Damage: {0}", _data.NavigationDamage));
-    _uiMain.DisplayLine(string.Format("   Short Range Scanner Damage: {0}", _data.ShortRangeScanDamage));
-    _uiMain.DisplayLine(string.Format("    Long Range Scanner Damage: {0}", _data.LongRangeScanDamage));
-    _uiMain.DisplayLine(string.Format("       Shield Controls Damage: {0}", _data.ShieldControlDamage));
-    _uiMain.DisplayLine(string.Format("         Main Computer Damage: {0}", _data.ComputerDamage));
-    _uiMain.DisplayLine(string.Format("Photon Torpedo Control Damage: {0}", _data.PhotonDamage));
-    _uiMain.DisplayLine(string.Format("                Phaser Damage: {0}", _data.PhaserDamage));
+    _uiMain.DisplayLine($"               Time Remaining: {_data.TimeRemaining}");
+    _uiMain.DisplayLine($"      Klingon Ships Remaining: {_data.Klingons}");
+    _uiMain.DisplayLine($"                    Starbases: {_data.StarBases}");
+    _uiMain.DisplayLine($"           Warp Engine Damage: {_data.NavigationDamage}");
+    _uiMain.DisplayLine($"   Short Range Scanner Damage: {_data.ShortRangeScanDamage}");
+    _uiMain.DisplayLine($"    Long Range Scanner Damage: {_data.LongRangeScanDamage}");
+    _uiMain.DisplayLine($"       Shield Controls Damage: {_data.ShieldControlDamage}");
+    _uiMain.DisplayLine($"         Main Computer Damage: {_data.ComputerDamage}");
+    _uiMain.DisplayLine($"Photon Torpedo Control Damage: {_data.PhotonDamage}");
+    _uiMain.DisplayLine($"                Phaser Damage: {_data.PhaserDamage}");
     _uiMain.DisplayLine("");
   }
 
-  private void DisplayGalaticRecord()
+  private void DisplayGalacticRecord()
   {
     _uiMain.Clear();
 
     _uiMain.DisplayLine("");
     _uiMain.DisplayLine("-------------------------------------------------");
-    for (int i = 0; i < 8; i++)
+    for (var i = 0; i < 8; i++)
     {
-      StringBuilder sb = new StringBuilder();
-      for (int j = 0; j < 8; j++)
+      var sb = new StringBuilder();
+      for (var j = 0; j < 8; j++)
       {
         sb.Append("| ");
-        int klingonCount = 0;
-        int starbaseCount = 0;
-        int starCount = 0;
-        Quadrant quadrant = _data.Quadrants[i][j];
+        var klingonCount = 0;
+        var starbaseCount = 0;
+        var starCount = 0;
+        var quadrant = _data.Quadrants[i][j];
         if (quadrant.Scanned)
         {
           klingonCount = quadrant.Klingons;
@@ -746,7 +731,7 @@ public sealed class Engine
           starCount = quadrant.Stars;
         }
 
-        sb.Append(string.Format("{0}{1}{2} ", klingonCount, starbaseCount, starCount));
+        sb.Append($"{klingonCount}{starbaseCount}{starCount} ");
       }
 
       sb.Append("|");
@@ -773,9 +758,8 @@ public sealed class Engine
       return;
     }
 
-    double phaserEnergy;
     _uiMain.DisplayLine("Phasers locked on target.");
-    if (!InputDouble(_uiMain, string.Format("Enter phaser energy (1--{0}): ", _data.Energy), out phaserEnergy) || phaserEnergy < 1 || phaserEnergy > _data.Energy)
+    if (!InputDouble(_uiMain, $"Enter phaser energy (1--{_data.Energy}): ", out var phaserEnergy) || phaserEnergy < 1 || phaserEnergy > _data.Energy)
     {
       _uiMain.DisplayLine("Invalid energy level.");
       _uiMain.DisplayLine("");
@@ -785,8 +769,8 @@ public sealed class Engine
     _uiMain.DisplayLine("");
 
     _uiMain.DisplayLine("Firing phasers...");
-    List<KlingonShip> destroyedShips = new List<KlingonShip>();
-    foreach (KlingonShip ship in _data.KlingonShips)
+    var destroyedShips = new List<KlingonShip>();
+    foreach (var ship in _data.KlingonShips)
     {
       _data.Energy -= (int)phaserEnergy;
       if (_data.Energy < 0)
@@ -795,23 +779,21 @@ public sealed class Engine
         break;
       }
 
-      double distance = Distance(_data.SectorX, _data.SectorY, ship.SectorX, ship.SectorY);
-      double deliveredEnergy = phaserEnergy * (1.0 - distance / 11.3);
+      var distance = Distance(_data.SectorX, _data.SectorY, ship.SectorX, ship.SectorY);
+      var deliveredEnergy = phaserEnergy * (1.0 - distance / 11.3);
       ship.ShieldLevel -= (int)deliveredEnergy;
       if (ship.ShieldLevel <= 0)
       {
-        _uiMain.DisplayLine(string.Format("Klingon ship destroyed at sector [{0},{1}].",
-          (ship.SectorX + 1), (ship.SectorY + 1)));
+        _uiMain.DisplayLine($"Klingon ship destroyed at sector [{(ship.SectorX + 1)},{(ship.SectorY + 1)}].");
         destroyedShips.Add(ship);
       }
       else
       {
-        _uiMain.DisplayLine(string.Format("Hit ship at sector [{0},{1}]. Klingon shield strength dropped to {2}.",
-          (ship.SectorX + 1), (ship.SectorY + 1), ship.ShieldLevel));
+        _uiMain.DisplayLine($"Hit ship at sector [{(ship.SectorX + 1)},{(ship.SectorY + 1)}]. Klingon shield strength dropped to {ship.ShieldLevel}.");
       }
     }
 
-    foreach (KlingonShip ship in destroyedShips)
+    foreach (var ship in destroyedShips)
     {
       _data.Quadrants[_data.QuadrantY][_data.QuadrantX].Klingons--;
       _data.Klingons--;
@@ -830,8 +812,7 @@ public sealed class Engine
 
   private void ShieldControls(bool adding, int maxTransfer)
   {
-    double transfer;
-    if (!InputDouble(_uiMain, string.Format("Enter amount of energy (1--{0}): ", maxTransfer), out transfer)
+    if (!InputDouble(_uiMain, $"Enter amount of energy (1--{maxTransfer}): ", out var transfer)
         || transfer < 1 || transfer > maxTransfer)
     {
       _uiMain.DisplayLine("Invalid amount of energy.");
@@ -852,51 +833,49 @@ public sealed class Engine
       _data.ShieldLevel -= (int)transfer;
     }
 
-    _uiMain.DisplayLine(string.Format("Shield strength is now {0}. Energy level is now {1}.", _data.ShieldLevel, _data.Energy));
+    _uiMain.DisplayLine($"Shield strength is now {_data.ShieldLevel}. Energy level is now {_data.Energy}.");
     _uiMain.DisplayLine("");
   }
 
   private bool KlingonsAttack()
   {
-    if (_data.KlingonShips.Count > 0)
+    if (_data.KlingonShips.Count <= 0)
     {
-      foreach (KlingonShip ship in _data.KlingonShips)
-      {
-        if (_data.Docked)
-        {
-          _uiMain.DisplayLine(string.Format("Enterprise hit by ship at sector [{0},{1}]. No damage due to starbase shields.",
-            (ship.SectorX + 1), (ship.SectorY + 1)));
-        }
-        else
-        {
-          double distance = Distance(_data.SectorX, _data.SectorY, ship.SectorX, ship.SectorY);
-          double deliveredEnergy = 300 * _data.random.NextDouble() * (1.0 - distance / 11.3);
-          _data.ShieldLevel -= (int)deliveredEnergy;
-          if (_data.ShieldLevel < 0)
-          {
-            _data.ShieldLevel = 0;
-            _data.Destroyed = true;
-          }
-
-          _uiMain.DisplayLine(string.Format("Enterprise hit by ship at sector [{0},{1}]. Shields dropped to {2}.",
-            (ship.SectorX + 1), (ship.SectorY + 1), _data.ShieldLevel));
-          if (_data.ShieldLevel == 0)
-          {
-            return true;
-          }
-        }
-      }
-
-      return true;
+      return false;
     }
 
-    return false;
+    foreach (var ship in _data.KlingonShips)
+    {
+      if (_data.Docked)
+      {
+        _uiMain.DisplayLine($"Enterprise hit by ship at sector [{(ship.SectorX + 1)},{(ship.SectorY + 1)}]. No damage due to starbase shields.");
+      }
+      else
+      {
+        var distance = Distance(_data.SectorX, _data.SectorY, ship.SectorX, ship.SectorY);
+        var deliveredEnergy = 300 * _data.random.NextDouble() * (1.0 - distance / 11.3);
+        _data.ShieldLevel -= (int)deliveredEnergy;
+        if (_data.ShieldLevel < 0)
+        {
+          _data.ShieldLevel = 0;
+          _data.Destroyed = true;
+        }
+
+        _uiMain.DisplayLine($"Enterprise hit by ship at sector [{(ship.SectorX + 1)},{(ship.SectorY + 1)}]. Shields dropped to {_data.ShieldLevel}.");
+        if (_data.ShieldLevel == 0)
+        {
+          return true;
+        }
+      }
+    }
+
+    return true;
   }
 
   private static double Distance(double x1, double y1, double x2, double y2)
   {
-    double x = x2 - x1;
-    double y = y2 - y1;
+    var x = x2 - x1;
+    var y = y2 - y1;
 
     return Math.Sqrt(x * x + y * y);
   }
@@ -908,7 +887,7 @@ public sealed class Engine
       return;
     }
 
-    int damage = 1 + _data.random.Next(5);
+    var damage = 1 + _data.random.Next(5);
     if (item < 0)
     {
       item = _data.random.Next(7);
@@ -952,7 +931,7 @@ public sealed class Engine
         break;
 
       default:
-        Debug.Fail("Failed to handle item: " + item.ToString());
+        Debug.Fail("Failed to handle item: " + item);
         break;
     }
 
@@ -1060,25 +1039,25 @@ public sealed class Engine
     }
 
     _uiMain.DisplayLine("-------------------");
-    for (int i = _data.QuadrantY - 1; i <= _data.QuadrantY + 1; i++)
+    for (var i = _data.QuadrantY - 1; i <= _data.QuadrantY + 1; i++)
     {
-      StringBuilder sb = new StringBuilder();
-      for (int j = _data.QuadrantX - 1; j <= _data.QuadrantX + 1; j++)
+      var sb = new StringBuilder();
+      for (var j = _data.QuadrantX - 1; j <= _data.QuadrantX + 1; j++)
       {
         sb.Append("| ");
-        int klingonCount = 0;
-        int starbaseCount = 0;
-        int starCount = 0;
+        var klingonCount = 0;
+        var starbaseCount = 0;
+        var starCount = 0;
         if (i >= 0 && j >= 0 && i < 8 && j < 8)
         {
-          Quadrant quadrant = _data.Quadrants[i][j];
+          var quadrant = _data.Quadrants[i][j];
           quadrant.Scanned = true;
           klingonCount = quadrant.Klingons;
           starbaseCount = quadrant.StarBase ? 1 : 0;
           starCount = quadrant.Stars;
         }
 
-        sb.Append(string.Format("{0}{1}{2} ", klingonCount, starbaseCount, starCount));
+        sb.Append($"{klingonCount}{starbaseCount}{starCount} ");
       }
 
       sb.Append("|");
@@ -1112,8 +1091,7 @@ public sealed class Engine
       return;
     }
 
-    double direction;
-    if (!InputDouble(_uiMain, "Enter firing direction (1.0--9.0): ", out direction) || direction < 1.0 || direction > 9.0)
+    if (!InputDouble(_uiMain, "Enter firing direction (1.0--9.0): ", out var direction) || direction < 1.0 || direction > 9.0)
     {
       _uiMain.DisplayLine("Invalid direction.");
       _uiMain.DisplayLine("");
@@ -1124,7 +1102,7 @@ public sealed class Engine
     _uiMain.DisplayLine("Photon torpedo fired...");
     _data.PhotonTorpedoes--;
 
-    double angle = -(Math.PI * (direction - 1.0) / 4.0);
+    var angle = -(Math.PI * (direction - 1.0) / 4.0);
     if (_data.random.Next(3) == 0)
     {
       angle += ((1.0 - 2.0 * _data.random.NextDouble()) * Math.PI * 2.0) * 0.03;
@@ -1132,11 +1110,11 @@ public sealed class Engine
 
     double x = _data.SectorX;
     double y = _data.SectorY;
-    double vx = Math.Cos(angle) / 20;
-    double vy = Math.Sin(angle) / 20;
+    var vx = Math.Cos(angle) / 20;
+    var vy = Math.Sin(angle) / 20;
     int lastX = -1, lastY = -1;
-    int newX = _data.SectorX;
-    int newY = _data.SectorY;
+    var newX = _data.SectorX;
+    var newY = _data.SectorY;
 
     while (x >= 0 && y >= 0 && Math.Round(x) < 8 && Math.Round(y) < 8)
     {
@@ -1144,17 +1122,16 @@ public sealed class Engine
       newY = (int)Math.Round(y);
       if (lastX != newX || lastY != newY)
       {
-        _uiMain.DisplayLine(string.Format("  [{0},{1}]", newX + 1, newY + 1));
+        _uiMain.DisplayLine($"  [{newX + 1},{newY + 1}]");
         lastX = newX;
         lastY = newY;
       }
 
-      foreach (KlingonShip ship in _data.KlingonShips)
+      foreach (var ship in _data.KlingonShips)
       {
         if (ship.SectorX == newX && ship.SectorY == newY)
         {
-          _uiMain.DisplayLine(string.Format("Klingon ship destroyed at sector [{0},{1}].",
-            (ship.SectorX + 1), (ship.SectorY + 1)));
+          _uiMain.DisplayLine($"Klingon ship destroyed at sector [{(ship.SectorX + 1)},{(ship.SectorY + 1)}].");
           _data.Sector[ship.SectorY][ship.SectorX] = SectorType.Empty;
           _data.Klingons--;
           _data.KlingonShips.Remove(ship);
@@ -1169,13 +1146,11 @@ public sealed class Engine
           _data.StarBases--;
           _data.Quadrants[_data.QuadrantY][_data.QuadrantX].StarBase = false;
           _data.Sector[newY][newX] = SectorType.Empty;
-          _uiMain.DisplayLine(string.Format("The Enterprise destroyed a Federation starbase at sector [{0},{1}]!",
-            newX + 1, newY + 1));
+          _uiMain.DisplayLine($"The Enterprise destroyed a Federation starbase at sector [{newX + 1},{newY + 1}]!");
           goto label;
 
         case SectorType.Star:
-          _uiMain.DisplayLine(string.Format("The torpedo was captured by a star's gravitational field at sector [{0},{1}].",
-            newX + 1, newY + 1));
+          _uiMain.DisplayLine($"The torpedo was captured by a star's gravitational field at sector [{newX + 1},{newY + 1}].");
           goto label;
 
         case SectorType.Empty:
@@ -1184,7 +1159,7 @@ public sealed class Engine
           break;
 
         default:
-          Debug.Fail("Failed to handle: " + _data.Sector[newY][newX].ToString());
+          Debug.Fail("Failed to handle: " + _data.Sector[newY][newX]);
           break;
       }
 
@@ -1207,16 +1182,15 @@ public sealed class Engine
 
   private void Navigation()
   {
-    double maxWarpFactor = 8.0;
+    var maxWarpFactor = 8.0;
     if (_data.NavigationDamage > 0)
     {
       maxWarpFactor = 0.2 + _data.random.Next(9) / 10.0;
-      _uiMain.DisplayLine(string.Format("Warp engines damaged. Maximum warp factor: {0}", maxWarpFactor));
+      _uiMain.DisplayLine($"Warp engines damaged. Maximum warp factor: {maxWarpFactor}");
       _uiMain.DisplayLine("");
     }
 
-    double direction, distance;
-    if (!InputDouble(_uiMain, "Enter course (1.0--9.0): ", out direction)
+    if (!InputDouble(_uiMain, "Enter course (1.0--9.0): ", out var direction)
         || direction < 1.0 || direction > 9.0)
     {
       _uiMain.DisplayLine("Invalid course.");
@@ -1224,7 +1198,7 @@ public sealed class Engine
       return;
     }
 
-    if (!InputDouble(_uiMain, string.Format("Enter warp factor (0.1--{0}): ", maxWarpFactor), out distance)
+    if (!InputDouble(_uiMain, $"Enter warp factor (0.1--{maxWarpFactor}): ", out var distance)
         || distance < 0.1 || distance > maxWarpFactor)
     {
       _uiMain.DisplayLine("Invalid warp factor.");
@@ -1235,7 +1209,7 @@ public sealed class Engine
     _uiMain.DisplayLine("");
 
     distance *= 8;
-    int energyRequired = (int)distance;
+    var energyRequired = (int)distance;
     if (energyRequired >= _data.Energy)
     {
       _uiMain.DisplayLine("Unable to comply. Insufficient energy to travel that speed.");
@@ -1250,16 +1224,17 @@ public sealed class Engine
     }
 
     int lastQuadX = _data.QuadrantX, lastQuadY = _data.QuadrantY;
-    double angle = -(Math.PI * (direction - 1.0) / 4.0);
+    var angle = -(Math.PI * (direction - 1.0) / 4.0);
     double x = _data.QuadrantX * 8 + _data.SectorX;
     double y = _data.QuadrantY * 8 + _data.SectorY;
-    double dx = distance * Math.Cos(angle);
-    double dy = distance * Math.Sin(angle);
-    double vx = dx / 1000;
-    double vy = dy / 1000;
-    int quadX, quadY, sectX, sectY, lastSectX = _data.SectorX, lastSectY = _data.SectorY;
+    var dx = distance * Math.Cos(angle);
+    var dy = distance * Math.Sin(angle);
+    var vx = dx / 1000;
+    var vy = dy / 1000;
+    int quadX, quadY;
+    int lastSectX = _data.SectorX, lastSectY = _data.SectorY;
     _data.Sector[_data.SectorY][_data.SectorX] = SectorType.Empty;
-    for (int i = 0; i < 1000; i++)
+    for (var i = 0; i < 1000; i++)
     {
       x += vx;
       y += vy;
@@ -1267,8 +1242,8 @@ public sealed class Engine
       quadY = ((int)Math.Round(y)) / 8;
       if (quadX == _data.QuadrantX && quadY == _data.QuadrantY)
       {
-        sectX = ((int)Math.Round(x)) % 8;
-        sectY = ((int)Math.Round(y)) % 8;
+        var sectX = ((int)Math.Round(x)) % 8;
+        var sectY = ((int)Math.Round(y)) % 8;
         if (sectX < 0 || sectY < 0)
         {
           _data.SectorX = lastSectX;
@@ -1374,12 +1349,12 @@ public sealed class Engine
     }
   }
 
-  private bool InputDouble(IUserInterface UI, string prompt, out double value)
+  private static bool InputDouble(IUserInterface ui, string prompt, out double value)
   {
     try
     {
-      string NumStr = UI.InputString(prompt);
-      value = Double.Parse(NumStr);
+      var numStr = ui.InputString(prompt);
+      value = Double.Parse(numStr);
       return true;
     }
     catch
@@ -1390,12 +1365,12 @@ public sealed class Engine
     return false;
   }
 
-  private bool InputInt(IUserInterface UI, string prompt, out int value)
+  private static bool InputInt(IUserInterface ui, string prompt, out int value)
   {
     try
     {
-      string NumStr = UI.InputString(prompt);
-      value = Int32.Parse(NumStr);
+      var numStr = ui.InputString(prompt);
+      value = Int32.Parse(numStr);
       return true;
     }
     catch
@@ -1408,14 +1383,14 @@ public sealed class Engine
 
   private void GenerateSector()
   {
-    Quadrant quadrant = _data.Quadrants[_data.QuadrantY][_data.QuadrantX];
-    bool starbase = quadrant.StarBase;
-    int stars = quadrant.Stars;
-    int klingons = quadrant.Klingons;
+    var quadrant = _data.Quadrants[_data.QuadrantY][_data.QuadrantX];
+    var starbase = quadrant.StarBase;
+    var stars = quadrant.Stars;
+    var klingons = quadrant.Klingons;
     _data.KlingonShips.Clear();
-    for (int i = 0; i < 8; i++)
+    for (var i = 0; i < 8; i++)
     {
-      for (int j = 0; j < 8; j++)
+      for (var j = 0; j < 8; j++)
       {
         _data.Sector[i][j] = SectorType.Empty;
       }
@@ -1424,8 +1399,8 @@ public sealed class Engine
     _data.Sector[_data.SectorY][_data.SectorX] = SectorType.Enterprise;
     while (starbase || stars > 0 || klingons > 0)
     {
-      int i = _data.random.Next(8);
-      int j = _data.random.Next(8);
+      var i = _data.random.Next(8);
+      var j = _data.random.Next(8);
       if (IsSectorRegionEmpty(i, j))
       {
         if (starbase)
@@ -1443,10 +1418,12 @@ public sealed class Engine
         else if (klingons > 0)
         {
           _data.Sector[i][j] = SectorType.Klingon;
-          KlingonShip klingonShip = new KlingonShip();
-          klingonShip.ShieldLevel = 300 + _data.random.Next(200);
-          klingonShip.SectorY = i;
-          klingonShip.SectorX = j;
+          var klingonShip = new KlingonShip
+          {
+            ShieldLevel = 300 + _data.random.Next(200),
+            SectorY = i,
+            SectorX = j
+          };
           _data.KlingonShips.Add(klingonShip);
           klingons--;
         }
@@ -1456,9 +1433,9 @@ public sealed class Engine
 
   private bool IsDockingLocation(int i, int j)
   {
-    for (int y = i - 1; y <= i + 1; y++)
+    for (var y = i - 1; y <= i + 1; y++)
     {
-      for (int x = j - 1; x <= j + 1; x++)
+      for (var x = j - 1; x <= j + 1; x++)
       {
         if (ReadSector(y, x) == SectorType.Starbase)
         {
@@ -1472,7 +1449,7 @@ public sealed class Engine
 
   private bool IsSectorRegionEmpty(int i, int j)
   {
-    for (int y = i - 1; y <= i + 1; y++)
+    for (var y = i - 1; y <= i + 1; y++)
     {
       if (ReadSector(y, j - 1) != SectorType.Empty
           && ReadSector(y, j + 1) != SectorType.Empty)
@@ -1505,7 +1482,7 @@ public sealed class Engine
     }
     else
     {
-      Quadrant quadrant = _data.Quadrants[_data.QuadrantY][_data.QuadrantX];
+      var quadrant = _data.Quadrants[_data.QuadrantY][_data.QuadrantX];
       quadrant.Scanned = true;
       PrintSector(quadrant);
     }
@@ -1515,7 +1492,7 @@ public sealed class Engine
 
   private void PrintSector(Quadrant quadrant)
   {
-    string condition = "GREEN";
+    var condition = "GREEN";
     if (quadrant.Klingons > 0)
     {
       condition = "RED";
@@ -1525,21 +1502,21 @@ public sealed class Engine
       condition = "YELLOW";
     }
 
-    _uiMain.DisplayLine(string.Format("-=--=--=--=--=--=--=--=-             Region: {0}", quadrant.Name));
-    PrintSectorRow(0, string.Format("           Quadrant: [{0},{1}]", _data.QuadrantX + 1, _data.QuadrantY + 1));
-    PrintSectorRow(1, string.Format("             Sector: [{0},{1}]", _data.SectorX + 1, _data.SectorY + 1));
-    PrintSectorRow(2, string.Format("           Stardate: {0}", _data.StarDate));
-    PrintSectorRow(3, string.Format("     Time remaining: {0}", _data.TimeRemaining));
-    PrintSectorRow(4, string.Format("          Condition: {0}", condition));
-    PrintSectorRow(5, string.Format("             Energy: {0}", _data.Energy));
-    PrintSectorRow(6, string.Format("            Shields: {0}", _data.ShieldLevel));
-    PrintSectorRow(7, string.Format("   Photon Torpedoes: {0}", _data.PhotonTorpedoes));
-    _uiMain.DisplayLine(string.Format("-=--=--=--=--=--=--=--=-             Docked: {0}", _data.Docked));
+    _uiMain.DisplayLine($"-=--=--=--=--=--=--=--=-             Region: {quadrant.Name}");
+    PrintSectorRow(0, $"           Quadrant: [{_data.QuadrantX + 1},{_data.QuadrantY + 1}]");
+    PrintSectorRow(1, $"             Sector: [{_data.SectorX + 1},{_data.SectorY + 1}]");
+    PrintSectorRow(2, $"           Stardate: {_data.StarDate}");
+    PrintSectorRow(3, $"     Time remaining: {_data.TimeRemaining}");
+    PrintSectorRow(4, $"          Condition: {condition}");
+    PrintSectorRow(5, $"             Energy: {_data.Energy}");
+    PrintSectorRow(6, $"            Shields: {_data.ShieldLevel}");
+    PrintSectorRow(7, $"   Photon Torpedoes: {_data.PhotonTorpedoes}");
+    _uiMain.DisplayLine($"-=--=--=--=--=--=--=--=-             Docked: {_data.Docked}");
 
     if (quadrant.Klingons > 0)
     {
       _uiMain.DisplayLine("");
-      _uiMain.DisplayLine(string.Format("Condition RED: Klingon ship{0} detected.", (quadrant.Klingons == 1 ? "" : "s")));
+      _uiMain.DisplayLine($"Condition RED: Klingon ship{(quadrant.Klingons == 1 ? "" : "s")} detected.");
       if (_data.ShieldLevel == 0 && !_data.Docked)
       {
         _uiMain.DisplayLine("Warning: Shields are down.");
@@ -1555,8 +1532,8 @@ public sealed class Engine
 
   private void PrintSectorRow(int row, string suffix)
   {
-    StringBuilder sb = new StringBuilder();
-    for (int column = 0; column < 8; column++)
+    var sb = new StringBuilder();
+    for (var column = 0; column < 8; column++)
     {
       switch (_data.Sector[row][column])
       {
@@ -1581,7 +1558,7 @@ public sealed class Engine
           break;
 
         default:
-          Debug.Fail("Failed to handle: " + _data.Sector[row][column].ToString());
+          Debug.Fail("Failed to handle: " + _data.Sector[row][column]);
           break;
       }
     }
@@ -1596,8 +1573,7 @@ public sealed class Engine
 
   private void PrintMission()
   {
-    _uiMain.DisplayLine(string.Format("Mission: Destroy {0} Klingon ships in {1} stardates with {2} starbases.",
-      _data.Klingons, _data.TimeRemaining, _data.StarBases));
+    _uiMain.DisplayLine($"Mission: Destroy {_data.Klingons} Klingon ships in {_data.TimeRemaining} stardates with {_data.StarBases} starbases.");
     _uiMain.DisplayLine("");
   }
 
@@ -1605,18 +1581,14 @@ public sealed class Engine
   {
     _data = new StarTrekData();
 
-    List<string> names = new List<string>();
-    foreach (string name in QuadrantNames)
-    {
-      names.Add(name);
-    }
+    var names = QuadrantNames.ToList();
 
-    for (int i = 0; i < 8; i++)
+    for (var i = 0; i < 8; i++)
     {
-      for (int j = 0; j < 8; j++)
+      for (var j = 0; j < 8; j++)
       {
-        int index = _data.random.Next(names.Count);
-        Quadrant quadrant = new Quadrant();
+        var index = _data.random.Next(names.Count);
+        var quadrant = new Quadrant();
         _data.Quadrants[i][j] = quadrant;
         quadrant.Name = names[index];
         quadrant.Stars = 1 + _data.random.Next(8);
@@ -1624,13 +1596,13 @@ public sealed class Engine
       }
     }
 
-    int klingonCount = _data.Klingons;
-    int starbaseCount = _data.StarBases;
+    var klingonCount = _data.Klingons;
+    var starbaseCount = _data.StarBases;
     while (klingonCount > 0 || starbaseCount > 0)
     {
-      int i = _data.random.Next(8);
-      int j = _data.random.Next(8);
-      Quadrant quadrant = _data.Quadrants[i][j];
+      var i = _data.random.Next(8);
+      var j = _data.random.Next(8);
+      var quadrant = _data.Quadrants[i][j];
       if (!quadrant.StarBase)
       {
         quadrant.StarBase = true;
@@ -1647,7 +1619,7 @@ public sealed class Engine
 
   private void PrintStrings(string[] strings)
   {
-    foreach (string str in strings)
+    foreach (var str in strings)
     {
       _uiMain.DisplayLine(str);
     }
