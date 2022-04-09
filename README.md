@@ -17,3 +17,15 @@ _Trek.Net_ features:
   * load and save games
   * runs in the browser with webassembly!
 
+# Prerequisites
+* .NET Core 6
+
+# Getting started
+```bash
+git clone https://github.com/TrevorDArcyEvans/Trek.Net.git
+cd Trek.Net/
+dotnet restore
+dotnet build
+dotnet run
+```
+open [Trek.Net](http://localhost:5063)
