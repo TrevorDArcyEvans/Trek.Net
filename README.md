@@ -17,6 +17,9 @@ _Trek.Net_ features:
   * load and save games
   * runs in the browser with webassembly!
 
+# Demo
+[Trek.Net](https://trevordarcyevans.github.io/Trek.Net/)
+
 # Prerequisites
 * .NET Core 6
 
